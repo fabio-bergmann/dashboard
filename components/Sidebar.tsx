@@ -22,6 +22,14 @@ function PersonalBrandIcon({ className }: { className?: string }) {
   );
 }
 
+function ApiStatsIcon({ className }: { className?: string }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <path d="M3 20V10h4v10H3ZM10 20V4h4v16h-4ZM17 20v-7h4v7h-4Z" fill="currentColor"/>
+    </svg>
+  );
+}
+
 function SettingsIcon({ className }: { className?: string }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
@@ -34,6 +42,7 @@ function SettingsIcon({ className }: { className?: string }) {
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: DashboardIcon },
   { label: "Personal Brand", href: "/personal-brand", icon: PersonalBrandIcon },
+  { label: "API Stats", href: "/api-stats", icon: ApiStatsIcon },
   { label: "Settings", href: "/settings", icon: SettingsIcon },
 ];
 

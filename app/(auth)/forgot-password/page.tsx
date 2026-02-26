@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
     if (isSignedIn) router.push("/");
   }, [isSignedIn, router]);
 
-  if (!isLoaded) return null;
+  const notReady = !isLoaded;
 
   async function activateSession(sessionId: string) {
     await setActive!({
@@ -120,7 +120,7 @@ export default function ForgotPasswordPage() {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={notReady || isLoading}
               className="w-full h-12 bg-accent hover:opacity-90 disabled:opacity-50 text-white text-[15px] font-medium rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
             >
               {isLoading ? "Sending..." : "Send reset code"}
@@ -159,7 +159,7 @@ export default function ForgotPasswordPage() {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={notReady || isLoading}
               className="w-full h-12 bg-accent hover:opacity-90 disabled:opacity-50 text-white text-[15px] font-medium rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
             >
               {isLoading ? "Resetting..." : "Reset password"}

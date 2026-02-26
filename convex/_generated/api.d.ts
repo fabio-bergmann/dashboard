@@ -8,7 +8,15 @@
  * @module
  */
 
+import type * as apps from "../apps.js";
+import type * as costFetch from "../costFetch.js";
 import type * as crons from "../crons.js";
+import type * as dailyUsage from "../dailyUsage.js";
+import type * as providers_anthropic from "../providers/anthropic.js";
+import type * as providers_openrouter from "../providers/openrouter.js";
+import type * as providers_xai from "../providers/xai.js";
+import type * as trackedKeys from "../trackedKeys.js";
+import type * as websiteStats from "../websiteStats.js";
 import type * as xStats from "../xStats.js";
 
 import type {
@@ -18,7 +26,15 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  apps: typeof apps;
+  costFetch: typeof costFetch;
   crons: typeof crons;
+  dailyUsage: typeof dailyUsage;
+  "providers/anthropic": typeof providers_anthropic;
+  "providers/openrouter": typeof providers_openrouter;
+  "providers/xai": typeof providers_xai;
+  trackedKeys: typeof trackedKeys;
+  websiteStats: typeof websiteStats;
   xStats: typeof xStats;
 }>;
 

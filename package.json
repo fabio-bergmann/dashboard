@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "convex dev --until-success && next dev",
-    "dev:convex": "convex dev",
+    "predev": "convex dev --until-success",
+    "dev": "convex dev & next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

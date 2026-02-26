@@ -20,7 +20,7 @@ export default function SignInForm() {
   const router = useRouter();
   const submittingVerificationRef = React.useRef(false);
 
-  if (!isLoaded) return null;
+  const notReady = !isLoaded;
 
   async function activateSession(sessionId: string) {
     await setActive!({
@@ -162,10 +162,7 @@ export default function SignInForm() {
         Sign in to your account
       </h1>
       <p className="text-[15px] text-muted mb-8">
-        Don&apos;t have an account?{" "}
-        <Link href="/sign-up" className="font-medium text-accent hover:underline">
-          Sign up
-        </Link>
+        Internal access only
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -200,7 +197,7 @@ export default function SignInForm() {
 
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={notReady || isLoading}
           className="w-full h-12 bg-accent hover:opacity-90 disabled:opacity-50 text-white text-[15px] font-medium rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
         >
           {isLoading ? "Signing in..." : "Sign in"}

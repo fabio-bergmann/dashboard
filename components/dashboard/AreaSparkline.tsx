@@ -121,18 +121,21 @@ export default function AreaSparkline({
               strokeDasharray="3,3"
               vectorEffect="non-scaling-stroke"
             />
-            <circle
-              cx={hovered.x}
-              cy={hovered.y}
-              r={4}
-              fill={strokeColor}
-              stroke="var(--surface)"
-              strokeWidth={2}
-              vectorEffect="non-scaling-stroke"
-            />
           </>
         )}
       </svg>
+      {hovered && (
+        <div
+          className="absolute w-2.5 h-2.5 rounded-full border-2 pointer-events-none"
+          style={{
+            left: `${(hovered.x / width) * 100}%`,
+            top: `${(hovered.y / height) * 100}%`,
+            transform: "translate(-50%, -50%)",
+            backgroundColor: strokeColor,
+            borderColor: "var(--surface)",
+          }}
+        />
+      )}
       {hoveredValue !== null && (
         <div
           className="absolute bottom-full mb-2 pointer-events-none"

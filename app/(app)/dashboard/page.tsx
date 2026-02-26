@@ -1,4 +1,5 @@
 import FollowersKpiCard from "@/components/dashboard/FollowersKpiCard";
+import WebsiteStatsCards from "@/components/dashboard/WebsiteStatsCards";
 
 export default function DashboardPage() {
   return (
@@ -6,6 +7,7 @@ export default function DashboardPage() {
       <h1 className="text-2xl font-semibold mb-6">Dashboard</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         <FollowersKpiCard />
+        <WebsiteStatsCards />
       </div>
     </div>
   );
