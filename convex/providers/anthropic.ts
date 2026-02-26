@@ -89,6 +89,7 @@ async function fetchUsageReport(
 
   const buckets: UsageBucket[] = [];
   let nextPage: string | null = url.toString();
+  console.log("Anthropic usage URL:", nextPage);
 
   while (nextPage) {
     const res: Response = await fetch(nextPage, { headers });

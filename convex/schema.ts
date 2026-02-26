@@ -48,4 +48,17 @@ export default defineSchema({
     site: v.string(),
     visitors: v.number(),
   }).index("by_site_date", ["site", "date"]),
+
+  custom_icons: defineTable({
+    name: v.string(),
+    svgContent: v.string(),
+    uploadedAt: v.number(),
+  }),
+
+  card_settings: defineTable({
+    cardId: v.string(),
+    iconId: v.optional(v.id("custom_icons")),
+    destinationUrl: v.string(),
+    linkType: v.union(v.literal("internal"), v.literal("external")),
+  }).index("by_cardId", ["cardId"]),
 });

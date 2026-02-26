@@ -8,11 +8,13 @@ import AddKeyRow from "./AddKeyRow";
 
 type TrackedKeysDialogProps = {
   appId: Id<"apps">;
+  open: boolean;
   onClose: () => void;
 };
 
 export default function TrackedKeysDialog({
   appId,
+  open,
   onClose,
 }: TrackedKeysDialogProps) {
   const keys = useQuery(api.trackedKeys.listByApp, { appId });
@@ -20,12 +22,12 @@ export default function TrackedKeysDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-200 ${open ? "bg-black/30 backdrop-blur-[2px]" : "bg-transparent pointer-events-none"}`}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-lg rounded-2xl border border-border bg-white p-6 shadow-lg dark:bg-surface">
+      <div className={`w-full max-w-lg rounded-2xl border border-border bg-white p-6 shadow-lg dark:bg-surface transition-all duration-200 ${open ? "scale-100 opacity-100" : "scale-95 opacity-0"}`}>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">
             Tracked Keys

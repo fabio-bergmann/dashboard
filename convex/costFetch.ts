@@ -8,7 +8,7 @@ import {
 import { internal } from "./_generated/api";
 import { Id, Doc } from "./_generated/dataModel";
 import { fetchAnthropicCosts } from "./providers/anthropic";
-import { fetchOpenRouterKeyCost } from "./providers/openrouter";
+import { fetchOpenRouterActivity } from "./providers/openrouter";
 import { fetchXaiUsage } from "./providers/xai";
 
 const providerValidator = v.union(
@@ -98,7 +98,6 @@ export const fetchAllDailyCosts = internalAction({
     );
 
     const byProvider = groupBy(allKeys, (k) => k.provider);
-    const today = getDateString(0);
     const tomorrow = getDateString(1);
     const yesterday = getDateString(-1);
 
@@ -123,27 +122,20 @@ export const fetchAllDailyCosts = internalAction({
       }
     }
 
-    // OpenRouter
+    // OpenRouter (account-wide activity, attributed to each app's first key)
     const openrouterKeys = byProvider.openrouter ?? [];
-    for (const key of openrouterKeys) {
+    if (openrouterKeys.length > 0) {
       try {
-        const usage = await fetchOpenRouterKeyCost(key.keyId);
-        await ctx.runMutation(internal.costFetch.upsertDailyUsageBatch, {
-          rows: [
-            {
-              trackedKeyId: key._id,
-              appId: key.appId,
-              provider: "openrouter" as const,
-              date: today,
-              model: "_total",
-              inputTokens: 0,
-              outputTokens: 0,
-              cost: usage.daily,
-            },
-          ],
-        });
+        const rows = await fetchOpenRouterActivity();
+        const mapped = mapOpenRouterRows(rows, openrouterKeys);
+        for (const chunk of chunkArray(mapped, 100)) {
+          await ctx.runMutation(
+            internal.costFetch.upsertDailyUsageBatch,
+            { rows: chunk },
+          );
+        }
       } catch (err) {
-        console.error(`Failed to fetch OpenRouter costs for ${key.keyName}:`, err);
+        console.error("Failed to fetch OpenRouter costs:", err);
       }
     }
 
@@ -201,28 +193,25 @@ export const backfillKey = internalAction({
         break;
       }
       case "openrouter": {
-        // OpenRouter only provides rolling daily totals — no historical data
-        const usage = await fetchOpenRouterKeyCost(key.keyId);
-        console.log(`OpenRouter daily cost: $${usage.daily}`);
-        const today = getDateString(0);
-        await ctx.runMutation(internal.costFetch.upsertDailyUsageBatch, {
-          rows: [
-            {
-              trackedKeyId: key._id,
-              appId: key.appId,
-              provider: "openrouter" as const,
-              date: today,
-              model: "_total",
-              inputTokens: 0,
-              outputTokens: 0,
-              cost: usage.daily,
-            },
-          ],
-        });
+        const rows = await fetchOpenRouterActivity();
+        console.log(`OpenRouter activity returned ${rows.length} rows`);
+        const mapped = mapOpenRouterRows(rows, [key]);
+        for (const chunk of chunkArray(mapped, 100)) {
+          await ctx.runMutation(
+            internal.costFetch.upsertDailyUsageBatch,
+            { rows: chunk },
+          );
+        }
         break;
       }
       case "xai": {
-        const rows = await fetchXaiUsage(startDate, tomorrow);
+        let rows;
+        try {
+          rows = await fetchXaiUsage(startDate, tomorrow);
+        } catch (err) {
+          console.error(`xAI fetch failed (skipping): ${err}`);
+          break;
+        }
         console.log(`xAI returned ${rows.length} rows`);
         const mapped = mapXaiRows(rows, [key]);
         console.log(`xAI mapped to ${mapped.length} rows after key matching`);
@@ -314,6 +303,31 @@ function mapXaiRows(
         cost: r.cost,
       };
     });
+}
+
+// OpenRouter activity is account-wide, so we attribute all rows to each app's
+// first OpenRouter key. If multiple apps track OpenRouter, data is duplicated.
+function mapOpenRouterRows(
+  rows: { model: string; date: string; inputTokens: number; outputTokens: number; cost: number }[],
+  keys: TrackedKey[],
+): UsageRow[] {
+  // Group keys by app — pick one key per app to attribute
+  const appKeys = new Map<string, TrackedKey>();
+  for (const k of keys) {
+    if (!appKeys.has(k.appId)) appKeys.set(k.appId, k);
+  }
+  return Array.from(appKeys.values()).flatMap((key) =>
+    rows.map((r) => ({
+      trackedKeyId: key._id,
+      appId: key.appId,
+      provider: "openrouter" as const,
+      date: r.date,
+      model: r.model,
+      inputTokens: r.inputTokens,
+      outputTokens: r.outputTokens,
+      cost: r.cost,
+    })),
+  );
 }
 
 function getDateString(daysOffset: number): string {

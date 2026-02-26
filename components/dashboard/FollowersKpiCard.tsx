@@ -3,6 +3,7 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import KpiCard from "./KpiCard";
+import KpiCardWrapper from "./KpiCardWrapper";
 import AreaSparkline from "./AreaSparkline";
 
 function XIcon() {
@@ -21,7 +22,16 @@ export default function FollowersKpiCard() {
   }
 
   if (data.length === 0) {
-    return <KpiCard label="Followers" value="0" icon={<XIcon />} />;
+    return (
+      <KpiCardWrapper
+        cardId="followers"
+        defaultIcon={<XIcon />}
+        defaultUrl="https://x.com/i/account_analytics"
+        defaultLinkType="external"
+      >
+        {(icon) => <KpiCard label="Followers" value="0" icon={icon} />}
+      </KpiCardWrapper>
+    );
   }
 
   const last30 = data.slice(0, 30);
@@ -45,21 +55,21 @@ export default function FollowersKpiCard() {
   const formattedValue = new Intl.NumberFormat("en-US").format(currentValue);
 
   return (
-    <KpiCard
-      label="Followers"
-      value={formattedValue}
-      change={{ value: changePercent, period: "vs 30d ago" }}
-      icon={
-        <a
-          href="https://x.com/i/account_analytics"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-foreground transition-colors"
-        >
-          <XIcon />
-        </a>
-      }
-      chart={<AreaSparkline data={chartData} labels={chartLabels} />}
-    />
+    <KpiCardWrapper
+      cardId="followers"
+      defaultIcon={<XIcon />}
+      defaultUrl="https://x.com/i/account_analytics"
+      defaultLinkType="external"
+    >
+      {(icon) => (
+        <KpiCard
+          label="Followers"
+          value={formattedValue}
+          change={{ value: changePercent, period: "vs 30d ago" }}
+          icon={icon}
+          chart={<AreaSparkline data={chartData} labels={chartLabels} />}
+        />
+      )}
+    </KpiCardWrapper>
   );
 }

@@ -9,8 +9,10 @@
  */
 
 import type * as apps from "../apps.js";
+import type * as cardSettings from "../cardSettings.js";
 import type * as costFetch from "../costFetch.js";
 import type * as crons from "../crons.js";
+import type * as customIcons from "../customIcons.js";
 import type * as dailyUsage from "../dailyUsage.js";
 import type * as providers_anthropic from "../providers/anthropic.js";
 import type * as providers_openrouter from "../providers/openrouter.js";
@@ -27,8 +29,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   apps: typeof apps;
+  cardSettings: typeof cardSettings;
   costFetch: typeof costFetch;
   crons: typeof crons;
+  customIcons: typeof customIcons;
   dailyUsage: typeof dailyUsage;
   "providers/anthropic": typeof providers_anthropic;
   "providers/openrouter": typeof providers_openrouter;

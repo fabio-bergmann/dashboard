@@ -16,6 +16,25 @@ export async function fetchXaiUsage(
   if (!apiKey || !teamId)
     throw new Error("XAI_MANAGEMENT_KEY or XAI_TEAM_ID not set");
 
+  // xAI uses gRPC with JSON transcoding. Schema from:
+  // https://github.com/xai-org/xai-proto/blob/main/proto/xai/shared/analytics/analytics.proto
+  const requestBody = {
+    analyticsRequest: {
+      timeRange: {
+        startTime: `${startDate} 00:00:00`,
+        endTime: `${endDate} 00:00:00`,
+        timezone: "UTC",
+      },
+      timeUnit: "TIME_UNIT_DAY",
+      values: [
+        { name: "cost", aggregation: "AGGREGATION_SUM" },
+        { name: "tokens", aggregation: "AGGREGATION_SUM" },
+      ],
+      groupBy: ["api_key", "model"],
+    },
+  };
+  console.log("xAI usage request:", JSON.stringify(requestBody));
+
   const res = await fetch(
     `https://management-api.x.ai/v1/billing/teams/${teamId}/usage`,
     {
@@ -24,12 +43,7 @@ export async function fetchXaiUsage(
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        start_date: startDate,
-        end_date: endDate,
-        granularity: "daily",
-        group_by: ["api_key", "model"],
-      }),
+      body: JSON.stringify(requestBody),
     },
   );
   if (!res.ok) {
@@ -44,43 +58,83 @@ export async function fetchXaiUsage(
 }
 
 function mapXaiResponse(json: unknown): XaiUsageRow[] {
-  const rows: XaiUsageRow[] = [];
+  const root = json as Record<string, unknown>;
 
-  // The xAI usage API response schema is not fully documented.
-  // This handles the most likely response shapes.
-  const data = (json as Record<string, unknown>).data ?? json;
+  // The response likely has time-bucketed results
+  const buckets =
+    (root.buckets as unknown[]) ??
+    (root.data as unknown[]) ??
+    (root.results as unknown[]) ??
+    (root.rows as unknown[]);
 
-  if (!Array.isArray(data)) {
-    // If the response is a single object with usage entries, try to extract
-    const entries = (data as Record<string, unknown>).usage_entries ?? (data as Record<string, unknown>).entries;
-    if (Array.isArray(entries)) {
-      return mapEntries(entries);
-    }
-    return rows;
+  if (Array.isArray(buckets)) {
+    return buckets.flatMap(mapBucketOrEntry);
   }
 
-  return mapEntries(data);
+  // Maybe the response is flat entries
+  const entries =
+    (root.entries as unknown[]) ??
+    (root.items as unknown[]);
+  if (Array.isArray(entries)) {
+    return entries.flatMap(mapBucketOrEntry);
+  }
+
+  return [];
 }
 
-function mapEntries(entries: unknown[]): XaiUsageRow[] {
-  return entries
-    .map((entry: unknown) => {
-      const e = entry as Record<string, unknown>;
-      const costTicks = Number(e.cost_in_usd_ticks ?? e.cost ?? 0);
-      // cost_in_usd_ticks is in units of 1/10 billionth of a dollar
-      const cost =
-        e.cost_in_usd_ticks !== undefined
-          ? costTicks / 10_000_000_000
-          : costTicks;
+function mapBucketOrEntry(item: unknown): XaiUsageRow[] {
+  const e = item as Record<string, unknown>;
 
-      return {
-        apiKeyId: String(e.api_key_id ?? e.apiKeyId ?? "unknown"),
-        model: String(e.model ?? "unknown"),
-        date: String(e.date ?? "").split("T")[0],
-        inputTokens: Number(e.prompt_tokens ?? e.input_tokens ?? 0),
-        outputTokens: Number(e.completion_tokens ?? e.output_tokens ?? 0),
-        cost,
-      };
-    })
-    .filter((r) => r.date.length > 0);
+  // If this bucket has nested results (time-bucketed response)
+  const nested =
+    (e.results as unknown[]) ??
+    (e.rows as unknown[]) ??
+    (e.entries as unknown[]);
+  if (Array.isArray(nested)) {
+    const bucketDate = extractDate(e);
+    return nested.map((sub) => mapSingleEntry(sub as Record<string, unknown>, bucketDate));
+  }
+
+  // Otherwise this is a flat entry
+  return [mapSingleEntry(e, "")];
+}
+
+function mapSingleEntry(e: Record<string, unknown>, fallbackDate: string): XaiUsageRow {
+  // Extract cost — could be in various formats
+  let cost = 0;
+  if (e.cost !== undefined) {
+    cost = Number(e.cost);
+  } else if (e.cost_in_usd_ticks !== undefined) {
+    cost = Number(e.cost_in_usd_ticks) / 10_000_000_000;
+  }
+  // Check for values array (analytics response format)
+  const values = e.values as unknown[];
+  if (Array.isArray(values)) {
+    for (const v of values) {
+      const val = v as Record<string, unknown>;
+      if (val.name === "cost") cost = Number(val.value ?? 0);
+      if (val.name === "tokens") {
+        // tokens value might be available here
+      }
+    }
+  }
+
+  const date = extractDate(e) || fallbackDate;
+
+  return {
+    apiKeyId: String(
+      e.api_key ?? e.apiKey ?? e.api_key_id ?? e.apiKeyId ?? "unknown",
+    ),
+    model: String(e.model ?? "unknown"),
+    date,
+    inputTokens: Number(e.prompt_tokens ?? e.input_tokens ?? 0),
+    outputTokens: Number(e.completion_tokens ?? e.output_tokens ?? 0),
+    cost,
+  };
+}
+
+function extractDate(e: Record<string, unknown>): string {
+  const raw =
+    e.date ?? e.time ?? e.timestamp ?? e.startTime ?? e.start_time ?? "";
+  return String(raw).split(" ")[0].split("T")[0];
 }

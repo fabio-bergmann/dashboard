@@ -36,6 +36,7 @@ export const add = mutation({
     });
     await ctx.scheduler.runAfter(0, internal.costFetch.backfillKey, {
       trackedKeyId,
+      days: 7,
     });
     return trackedKeyId;
   },
