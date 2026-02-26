@@ -20,6 +20,7 @@ import type * as providers_xai from "../providers/xai.js";
 import type * as trackedKeys from "../trackedKeys.js";
 import type * as websiteStats from "../websiteStats.js";
 import type * as xStats from "../xStats.js";
+import type * as youtubeStats from "../youtubeStats.js";
 
 import type {
   ApiFromModules,
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   trackedKeys: typeof trackedKeys;
   websiteStats: typeof websiteStats;
   xStats: typeof xStats;
+  youtubeStats: typeof youtubeStats;
 }>;
 
 /**

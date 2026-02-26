@@ -2,7 +2,7 @@
 
 const providerStyles: Record<string, string> = {
   anthropic: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-  openrouter: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+  openrouter: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
   xai: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
 };
 

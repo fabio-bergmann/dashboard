@@ -47,7 +47,7 @@ export default function CardContextMenu({
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 min-w-[160px] rounded-xl border border-border bg-white p-1.5 shadow-lg dark:bg-surface"
+      className="fixed z-50 w-fit rounded-xl border border-border bg-white p-1.5 shadow-lg dark:bg-surface"
       style={{ top: y, left: x }}
     >
       <button

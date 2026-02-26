@@ -43,6 +43,13 @@ export default defineSchema({
     .index("by_tracked_key_date", ["trackedKeyId", "date"])
     .index("by_key_date_model", ["trackedKeyId", "date", "model"]),
 
+  youtube_stats: defineTable({
+    date: v.string(),
+    subscriberCount: v.number(),
+    viewCount: v.number(),
+    videoCount: v.number(),
+  }).index("by_date", ["date"]),
+
   website_stats: defineTable({
     date: v.string(),
     site: v.string(),

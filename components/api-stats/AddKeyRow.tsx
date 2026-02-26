@@ -1,11 +1,96 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useAction, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 
 type Provider = "anthropic" | "openrouter" | "xai";
+
+const PROVIDERS: { value: Provider; label: string }[] = [
+  { value: "anthropic", label: "Anthropic" },
+  { value: "openrouter", label: "OpenRouter" },
+  { value: "xai", label: "xAI" },
+];
+
+function Dropdown({
+  value,
+  placeholder,
+  options,
+  disabled,
+  onChange,
+}: {
+  value: string;
+  placeholder: string;
+  options: { value: string; label: string }[];
+  disabled?: boolean;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const close = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) close();
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open, close]);
+
+  const selectedLabel = options.find((o) => o.value === value)?.label;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-9 items-center gap-1 rounded-lg border border-border bg-white px-3 text-sm text-foreground outline-none transition-colors hover:bg-task-hover focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50 dark:bg-surface"
+      >
+        <span className={selectedLabel ? "text-foreground" : "text-muted"}>
+          {selectedLabel ?? placeholder}
+        </span>
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="ml-1 shrink-0 text-muted"
+        >
+          <path d="M3 4.5L6 7.5L9 4.5" />
+        </svg>
+      </button>
+      <div
+        className={`absolute left-0 top-full mt-1 z-20 w-fit rounded-xl border border-border bg-white p-1.5 shadow-lg dark:bg-surface origin-top transition-all duration-150 ${open ? "scale-100 opacity-100" : "scale-95 opacity-0 pointer-events-none"}`}
+      >
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => {
+              onChange(option.value);
+              close();
+            }}
+            className={`flex w-full items-center rounded-lg px-3 py-1.5 text-left text-sm transition-colors ${
+              option.value === value
+                ? "bg-accent/10 text-accent font-medium"
+                : "text-foreground hover:bg-task-hover"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function AddKeyRow({ appId }: { appId: Id<"apps"> }) {
   const [provider, setProvider] = useState<Provider | "">("");
@@ -48,38 +133,28 @@ export default function AddKeyRow({ appId }: { appId: Id<"apps"> }) {
     setSelectedKeyId("");
   };
 
-  const selectClass =
-    "h-9 rounded-lg border border-border bg-white px-3 pr-8 text-sm text-foreground outline-none focus:border-accent focus:ring-1 focus:ring-accent dark:bg-surface disabled:opacity-50";
+  const keyOptions = (availableKeys ?? []).map((k) => ({
+    value: k.keyId,
+    label: k.name,
+  }));
 
   return (
     <div>
       <div className="flex items-center gap-2">
-        <select
+        <Dropdown
           value={provider}
-          onChange={(e) => handleProviderChange(e.target.value)}
-          className={selectClass}
-        >
-          <option value="">Provider...</option>
-          <option value="anthropic">Anthropic</option>
-          <option value="openrouter">OpenRouter</option>
-          <option value="xai">xAI</option>
-        </select>
+          placeholder="Provider..."
+          options={PROVIDERS}
+          onChange={handleProviderChange}
+        />
 
-        <select
+        <Dropdown
           value={selectedKeyId}
+          placeholder={loading ? "Loading..." : "Select key..."}
+          options={keyOptions}
           disabled={!availableKeys || loading}
-          onChange={(e) => setSelectedKeyId(e.target.value)}
-          className={selectClass}
-        >
-          <option value="">
-            {loading ? "Loading..." : "Select key..."}
-          </option>
-          {availableKeys?.map((k) => (
-            <option key={k.keyId} value={k.keyId}>
-              {k.name}
-            </option>
-          ))}
-        </select>
+          onChange={setSelectedKeyId}
+        />
 
         <button
           onClick={handleAdd}
@@ -89,9 +164,7 @@ export default function AddKeyRow({ appId }: { appId: Id<"apps"> }) {
           Add
         </button>
       </div>
-      {error && (
-        <p className="mt-1.5 text-xs text-red">{error}</p>
-      )}
+      {error && <p className="mt-1.5 text-xs text-red">{error}</p>}
     </div>
   );
 }

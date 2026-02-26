@@ -36,7 +36,7 @@ export default function AuthInputField({
         onChange={(event) => onChange(event.target.value)}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
-        className="w-full h-12 pl-11 pr-4 text-[15px] text-foreground placeholder:text-muted bg-surface border border-border rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+        className="w-full h-12 pl-11 pr-4 text-[15px] text-foreground placeholder:text-muted bg-white border border-border rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
       />
     </div>
   );

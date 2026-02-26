@@ -6,7 +6,6 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import KpiCard from "../dashboard/KpiCard";
 import StackedBarSparkline, {
-  PALETTE,
   type BarSegment,
 } from "./StackedBarSparkline";
 import TrackedKeysDialog from "./TrackedKeysDialog";
@@ -48,7 +47,7 @@ function CardMenu({
         </svg>
       </button>
       <div
-        className={`absolute right-0 top-full mt-1 z-20 min-w-[160px] rounded-xl border border-border bg-white p-1.5 shadow-lg dark:bg-surface origin-top-right transition-all duration-150 ${open ? "scale-100 opacity-100" : "scale-95 opacity-0 pointer-events-none"}`}
+        className={`absolute right-0 top-full mt-1 z-20 w-fit rounded-xl border border-border bg-white p-1.5 shadow-lg dark:bg-surface origin-top-right transition-all duration-150 ${open ? "scale-100 opacity-100" : "scale-95 opacity-0 pointer-events-none"}`}
       >
         <button
           onClick={() => {
@@ -192,7 +191,7 @@ function transformUsage(rows: UsageRow[]) {
     else groups.set(k, [r]);
   }
 
-  const cleaned: { date: string; model: string; cost: number }[] = [];
+  const cleaned: { date: string; model: string; provider: string; cost: number }[] = [];
   for (const [, group] of groups) {
     const hasNamed = group.some((r) => r.model !== "_total");
     for (const r of group) {
@@ -203,13 +202,17 @@ function transformUsage(rows: UsageRow[]) {
           r.model === "_total"
             ? (PROVIDER_LABELS[r.provider] ?? r.provider)
             : r.model,
+        provider: r.provider,
         cost: r.cost,
       });
     }
   }
 
+  // Track model → provider for color assignment
+  const modelProvider = new Map<string, string>();
   const byDate = new Map<string, Map<string, number>>();
   for (const r of cleaned) {
+    modelProvider.set(r.model, r.provider);
     let dateMap = byDate.get(r.date);
     if (!dateMap) {
       dateMap = new Map();
@@ -233,9 +236,25 @@ function transformUsage(rows: UsageRow[]) {
     }
   }
   const modelList = Array.from(allModels).sort();
-  const modelColors = new Map(
-    modelList.map((m, i) => [m, PALETTE[i % PALETTE.length]]),
-  );
+
+  // Provider-based color palettes (shades from dark to light)
+  const PROVIDER_PALETTES: Record<string, string[]> = {
+    anthropic: ["#ea580c", "#f97316", "#fb923c", "#fdba74", "#fed7aa"],
+    openrouter: ["#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe"],
+    xai: ["#262626", "#404040", "#525252", "#737373", "#a3a3a3"],
+  };
+  const FALLBACK_PALETTE = ["#6b7280", "#9ca3af", "#d1d5db"];
+
+  // Count models per provider for index assignment
+  const providerIdx = new Map<string, number>();
+  const modelColors = new Map<string, string>();
+  for (const model of modelList) {
+    const provider = modelProvider.get(model) ?? "";
+    const palette = PROVIDER_PALETTES[provider] ?? FALLBACK_PALETTE;
+    const idx = providerIdx.get(provider) ?? 0;
+    modelColors.set(model, palette[idx % palette.length]);
+    providerIdx.set(provider, idx + 1);
+  }
 
   const chartData: BarSegment[][] = windowDates.map((date) => {
     const dateMap = byDate.get(date)!;
