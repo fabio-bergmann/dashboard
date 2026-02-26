@@ -1,26 +1,74 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #F7F7F7;
   --foreground: #171717;
-}
+  --muted: #737373;
+  --border: #e5e5e5;
+  --accent: #0090FF;
+  --surface: #F7F7F7;
+  --surface-raised: #F7F7F7;
+  --section-header: #a3a3a3;
+  --checkbox-border: #d4d4d4;
+  --checkbox-checked: #5e5ce6;
+  --task-hover: #f5f5f5;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --green: #30A46C;
+  --success: #30A46C;
+  --red: #EB5758;
+  --destructive: #EB5758;
+  --blue: #0090FF;
+  --indigo: #3F63DD;
+  --purple: #7954CC;
+  --yellow: #FFC200;
+  --orange: #F76A14;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: #fafafa;
+    --muted: #737373;
+    --border: #262626;
+    --accent: #0090FF;
+    --surface: #141414;
+    --surface-raised: #141414;
+    --section-header: #525252;
+    --checkbox-border: #404040;
+    --checkbox-checked: #5e5ce6;
+    --task-hover: #1a1a1a;
   }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-section-header: var(--section-header);
+  --color-checkbox-border: var(--checkbox-border);
+  --color-checkbox-checked: var(--checkbox-checked);
+  --color-task-hover: var(--task-hover);
+
+  --color-green: var(--green);
+  --color-success: var(--success);
+  --color-red: var(--red);
+  --color-destructive: var(--destructive);
+  --color-blue: var(--blue);
+  --color-indigo: var(--indigo);
+  --color-purple: var(--purple);
+  --color-yellow: var(--yellow);
+  --color-orange: var(--orange);
+
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
